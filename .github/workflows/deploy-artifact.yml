@@ -124,7 +124,6 @@ jobs:
           source: "${project.basedir}/target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar"
           target: "/tmp"
           strip_components: 1
-          script: ls -lh target/dependency
         
 
 
