@@ -130,7 +130,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
-          source: "target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar"
+          source: "${project.basedir}/target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar"
           target: "/tmp"
           strip_components: 1
           script: ls -lh target/dependency
