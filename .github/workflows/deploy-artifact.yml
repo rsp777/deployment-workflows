@@ -119,7 +119,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
-          source: "target/${{ env.APP_NAME }}.jar"
+          source: "target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar"
           target: "/tmp"
           strip_components: 1
 
@@ -132,10 +132,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: 22
           script: |
-            echo "Deploying ${{ env.APP_NAME }}:${{ env.APP_VERSION }} to ${{ env.SERVER_HOST }}"
-            
-            mkdir -p ~/apps/inventory-wms/artifacts
-                        
+            echo "Deploying ${{ env.APP_NAME }}:${{ env.APP_VERSION }} to ${{ env.SERVER_HOST }}"                        
             sudo mv /tmp/${{ env.APP_NAME }}.jar ~/apps/inventory-wms/artifacts/${{ env.APP_NAME }}.jar
             sudo rm -f /tmp/${{ env.APP_NAME }}.jar
             
