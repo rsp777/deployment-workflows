@@ -138,9 +138,10 @@ jobs:
           port: 22
           script: |
             echo "Deploying ${{ env.APP_NAME }}:${{ env.APP_VERSION }} to ${{ env.SERVER_HOST }}"                        
-            sudo mv /tmp/${{ env.APP_NAME }}.jar ~/apps/inventory-wms/artifacts/${{ env.APP_NAME }}.jar
-            sudo rm -f /tmp/${{ env.APP_NAME }}.jar
-            
+            mv /tmp/target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar ~/apps/inventory-wms/artifacts/${{ env.APP_NAME }}.jar
+            rm -f /tmp/target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar
+
+            chmod +x ~/apps/inventory-wms/artifacts/${{ env.APP_NAME }}.jar
             echo "Restarting service: ${{ env.APP_NAME }}"
             chmod +x ~/apps/inventory-wms/scripts/stop.sh ~/apps/inventory-wms/scripts/start.sh
             ~/apps/inventory-wms/scripts/stop.sh ${{ env.APP_NAME }}
