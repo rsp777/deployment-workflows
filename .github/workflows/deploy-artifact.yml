@@ -119,6 +119,7 @@ jobs:
           host: ${{ env.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
           port: 22
           source: "${project.basedir}/target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar"
           target: "/tmp"
@@ -134,6 +135,7 @@ jobs:
           host: ${{ env.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
           port: 22
           script: |
             echo "Deploying ${{ env.APP_NAME }}:${{ env.APP_VERSION }} to ${{ env.SERVER_HOST }}"                        
