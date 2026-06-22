@@ -114,6 +114,7 @@ jobs:
       # 6. Copy JAR to Linux Server via SCP
       - name: Copy JAR to Linux Server via SCP
         uses: appleboy/scp-action@master
+        
         with:
           host: ${{ env.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
@@ -122,6 +123,9 @@ jobs:
           source: "target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar"
           target: "/tmp"
           strip_components: 1
+          script: ls -lh target/dependency
+        
+
 
       # 7. Deploy the Artifact to Remote Linux Server
       - name: Deploy the Artifact to Remote Linux Server
