@@ -26,13 +26,14 @@ on:
         options:
           - 'start'
           - 'stop'
+
 jobs:
   start-stop:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-      
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -49,35 +50,49 @@ jobs:
           else
             echo "SERVER_HOST=${{ secrets.DEV_SERVER_IP }}" >> $GITHUB_ENV
           fi
-          
+
           APP_NAME="${{ github.event.inputs.application }}"
           echo "APP_NAME=${APP_NAME}" >> $GITHUB_ENV
 
-            if [ "${{ github.event.inputs.command }}" = "start" ]; then
+          if [ "${{ github.event.inputs.command }}" = "start" ]; then
             echo "COMMAND=${{ secrets.START_CMD }}" >> $GITHUB_ENV
           elif [ "${{ github.event.inputs.command }}" = "stop" ]; then
             echo "COMMAND=${{ secrets.STOP_CMD }}" >> $GITHUB_ENV
           fi
-          
-        
-      # 2. Connect to Tailscale Network
-      - name: Trigger Start/Stop Script
+
+      # Debug: confirm runtime env vars exist
+      - name: Dump resolved env vars
+        run: |
+          echo "SERVER_HOST=$SERVER_HOST"
+          echo "APP_NAME=$APP_NAME"
+          echo "COMMAND=$COMMAND"
+
+      # 2. Connect to Tailscale network (no script input)
+      - name: Connect to Tailscale
         uses: tailscale/github-action@v3
         with:
           oauth-client-id: ${{ secrets.TAILSCALE_CLIENT_ID }}
           oauth-secret: ${{ secrets.TAILSCALE_CLIENT_SECRET }}
           tags: tag:sop
+
+      - name: Wait for Tailscale to be ready
+        run: |
+          # simple wait/check — make this more robust if needed
+          for i in {1..10}; do
+            tailscale status && break
+            sleep 1
+          done
+          tailscale status
+      
+      # 3. Run the start/stop command on the target machine using SSH from the runner
+      - name: Trigger Start/Stop
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
+          port: 22
           script: |
-               $COMMAND $APP_NAME
-        
-      # - name: Trigger Start/Stop
-      #   uses: appleboy/ssh-action@master
-      #   with:
-      #     host: ${{ env.SERVER_HOST }}
-      #     username: ${{ secrets.SERVER_USER }}
-      #     key: ${{ secrets.SERVER_SSH_KEY }}
-      #     passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
-      #     port: 22
-      #     script: |
-      #       ${{ env.COMMAND }} ${{ env.APP_NAME }}
-      #       echo "${{ github.event.inputs.command }}ing ${{ env.APP_NAME }} on ${{ env.SERVER_HOST }}"
+            ${{ env.COMMAND }} ${{ env.APP_NAME }}
+            echo "${{ github.event.inputs.command }}ing ${{ env.APP_NAME }} on ${{ env.SERVER_HOST }}"
