@@ -68,7 +68,7 @@ jobs:
           oauth-secret: ${{ secrets.TAILSCALE_CLIENT_SECRET }}
           tags: tag:sop
           script: |
-               ${{env.COMMAND}} ${{env.APP_NAME}}
+               $COMMAND $APP_NAME
         
       # - name: Trigger Start/Stop
       #   uses: appleboy/ssh-action@master
