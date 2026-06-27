@@ -78,4 +78,5 @@ jobs:
           passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
           port: 22
           script: |
+            ${{ env.COMMAND }} ${{ env.APP_NAME }}
             echo "${{ github.event.inputs.command }}ing ${{ env.APP_NAME }} on ${{ env.SERVER_HOST }}"
