@@ -76,7 +76,7 @@ jobs:
           echo "SERVER_HOST=$SERVER_HOST"
           echo "APP_NAME=$APP_NAME"
           echo "COMMAND=$COMMAND"
-          echo "SECRET_PREFIX=$SECRET_PREFIX"
+          echo "Looking for secrets: ${{ env.SECRET_PREFIX }}_SSH_KEY and ${{ env.SECRET_PREFIX }}_SSH_PASSPHRASE"
 
       # 3. DEBUG: Check which secret NAMES are being generated for this run
       - name: Debug Dynamic Secret Names
