@@ -27,7 +27,7 @@ on:
           - 'start'
           - 'stop'
 jobs:
-  deploy:
+  start-stop:
     runs-on: ubuntu-latest
     permissions:
       contents: read
