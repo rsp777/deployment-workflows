@@ -107,5 +107,6 @@ jobs:
           port: 22
           script: |
             # Evaluates to e.g., ./apps/inventory-wms/scripts/start.sh inventory-management-app
+            echo ${{env.SECRET_PREFIX}}
             ${{ env.COMMAND }} ${{ env.APP_NAME }}
             echo "Successfully triggered ${{ github.event.inputs.command }} for ${{ env.APP_NAME }} on ${{ env.SERVER_HOST }}"
