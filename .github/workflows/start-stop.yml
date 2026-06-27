@@ -61,17 +61,14 @@ jobs:
           
         
       # 2. Connect to Tailscale Network
-      - name: Connect to Tailscale Network
+      - name: Trigger Start/Stop Script
         uses: tailscale/github-action@v3
         with:
           oauth-client-id: ${{ secrets.TAILSCALE_CLIENT_ID }}
           oauth-secret: ${{ secrets.TAILSCALE_CLIENT_SECRET }}
           tags: tag:sop
-      
-      # 3. Start/Stop the application on the target server
-      - name: Trigger Start/Stop
-        run: |
-            ssh -o StrictHostKeyChecking=no ${{env.SERVER_HOST}} 'bash -s < ${{env.COMMAND}}'
+       script: |
+               ${{env.COMMAND}} ${{env.APP_NAME}}
         
       # - name: Trigger Start/Stop
       #   uses: appleboy/ssh-action@master
