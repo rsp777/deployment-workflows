@@ -9,7 +9,7 @@ on:
         type: choice
         options:
           - 'inventory-wms'
-          - 'staging-server-01'
+          - 'auth-wms'
           - 'development-server-01'
       application:
         description: 'Select Spring Boot Application to Start/Stop'
@@ -17,7 +17,7 @@ on:
         type: choice
         options:
           - 'inventory-management-app'
-          - 'payment-service'
+          - 'inventory-management-system'
           - 'inventory-service'
       command:
         description: 'Start/Stop Command'
@@ -45,8 +45,8 @@ jobs:
         run: |
           if [ "${{ github.event.inputs.environment }}" = "inventory-wms" ]; then
             echo "SERVER_HOST=${{ secrets.PROD_SERVER_IP }}" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.environment }}" = "staging-server-01" ]; then
-            echo "SERVER_HOST=${{ secrets.STAGING_SERVER_IP }}" >> $GITHUB_ENV
+          elif [ "${{ github.event.inputs.environment }}" = "auth-wms" ]; then
+            echo "SERVER_HOST=${{ secrets.AUTH_SERVER_IP }}" >> $GITHUB_ENV
           else
             echo "SERVER_HOST=${{ secrets.DEV_SERVER_IP }}" >> $GITHUB_ENV
           fi
