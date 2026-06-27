@@ -18,7 +18,8 @@ on:
         options:
           - 'inventory-management-app'
           - 'inventory-management-system'
-          - 'inventory-service'
+          - 'register-service'
+          - 'login-service'
       command:
         description: 'Start/Stop Command'
         required: true
@@ -94,5 +95,5 @@ jobs:
           passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
           port: 22
           script: |
-            ${{ env.COMMAND }} ${{ env.APP_NAME }}
+            ./apps/${{env.SERVER_HOST}}/scripts/${{ env.COMMAND }}.sh {{ env.APP_NAME }}
             echo "${{ github.event.inputs.command }}ing ${{ env.APP_NAME }} on ${{ env.SERVER_HOST }}"
