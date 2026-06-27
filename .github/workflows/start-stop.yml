@@ -55,7 +55,7 @@ jobs:
 
             if [ "${{ github.event.inputs.command }}" = "start" ]; then
             echo "COMMAND=${{ secrets.START_CMD }}" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.environment }}" = "stop" ]; then
+          elif [ "${{ github.event.inputs.command }}" = "stop" ]; then
             echo "COMMAND=${{ secrets.STOP_CMD }}" >> $GITHUB_ENV
           fi
           
