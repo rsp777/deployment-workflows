@@ -70,13 +70,17 @@ jobs:
       
       # 3. Start/Stop the application on the target server
       - name: Trigger Start/Stop
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ env.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
-          port: 22
-          script: |
-            ${{ env.COMMAND }} ${{ env.APP_NAME }}
-            echo "${{ github.event.inputs.command }}ing ${{ env.APP_NAME }} on ${{ env.SERVER_HOST }}"
+        run: |
+            ssh -o StrictHostKeyChecking=no ${{env.SERVER_HOST}} 'bash -s < ${{env.COMMAND}}'
+        
+      # - name: Trigger Start/Stop
+      #   uses: appleboy/ssh-action@master
+      #   with:
+      #     host: ${{ env.SERVER_HOST }}
+      #     username: ${{ secrets.SERVER_USER }}
+      #     key: ${{ secrets.SERVER_SSH_KEY }}
+      #     passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
+      #     port: 22
+      #     script: |
+      #       ${{ env.COMMAND }} ${{ env.APP_NAME }}
+      #       echo "${{ github.event.inputs.command }}ing ${{ env.APP_NAME }} on ${{ env.SERVER_HOST }}"
