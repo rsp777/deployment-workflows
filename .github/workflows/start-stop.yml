@@ -83,14 +83,16 @@ jobs:
             sleep 1
           done
           tailscale status
-
+      
       # 3. Run the start/stop command on the target machine using SSH from the runner
-      - name: Run Start/Stop on remote host via SSH
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
-        run: |
-          echo "$SSH_PRIVATE_KEY" > key.pem
-          chmod 600 key.pem
-          echo "Running: $COMMAND $APP_NAME on $SERVER_HOST"
-          ssh -o StrictHostKeyChecking=no -i key.pem "${{ secrets.SERVER_USER }}@$SERVER_HOST" "$COMMAND $APP_NAME"
-          rm -f key.pem
+      - name: Trigger Start/Stop
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
+          port: 22
+          script: |
+            ${{ env.COMMAND }} ${{ env.APP_NAME }}
+            echo "${{ github.event.inputs.command }}ing ${{ env.APP_NAME }} on ${{ env.SERVER_HOST }}"
