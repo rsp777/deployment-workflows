@@ -1,0 +1,81 @@
+name: Trigger Start/Stop Application on Target Server
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Select Target Linux Server / Environment'
+        required: true
+        type: choice
+        options:
+          - 'inventory-wms'
+          - 'staging-server-01'
+          - 'development-server-01'
+      application:
+        description: 'Select Spring Boot Application to Start/Stop'
+        required: true
+        type: choice
+        options:
+          - 'inventory-management-app'
+          - 'payment-service'
+          - 'inventory-service'
+      command:
+        description: 'Start/Stop Command'
+        required: true
+        type: choice
+        options:
+          - 'start'
+          - 'stop'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 1. SETTING ENV VARIABLES
+      - name: Set Environment Variables & Resolve Version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "inventory-wms" ]; then
+            echo "SERVER_HOST=${{ secrets.PROD_SERVER_IP }}" >> $GITHUB_ENV
+          elif [ "${{ github.event.inputs.environment }}" = "staging-server-01" ]; then
+            echo "SERVER_HOST=${{ secrets.STAGING_SERVER_IP }}" >> $GITHUB_ENV
+          else
+            echo "SERVER_HOST=${{ secrets.DEV_SERVER_IP }}" >> $GITHUB_ENV
+          fi
+          
+          APP_NAME="${{ github.event.inputs.application }}"
+          echo "APP_NAME=${APP_NAME}" >> $GITHUB_ENV
+
+            if [ "${{ github.event.inputs.command }}" = "start" ]; then
+            echo "COMMAND=${{ secrets.START_CMD }}" >> $GITHUB_ENV
+          elif [ "${{ github.event.inputs.environment }}" = "stop" ]; then
+            echo "COMMAND=${{ secrets.STOP_CMD }}" >> $GITHUB_ENV
+          fi
+          
+        
+      # 2. Connect to Tailscale Network
+      - name: Connect to Tailscale Network
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_CLIENT_SECRET }}
+          tags: tag:sop
+      
+      # 3. Start/Stop the application on the target server
+      - name: Trigger Start/Stop
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
+          port: 22
+          script: |
+            echo "${{ github.event.inputs.command }}ing ${{ env.APP_NAME }} on ${{ env.SERVER_HOST }}"
