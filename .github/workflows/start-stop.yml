@@ -77,6 +77,8 @@ jobs:
           echo "APP_NAME=$APP_NAME"
           echo "COMMAND=$COMMAND"
           echo "SECRET_PREFIX=$SECRET_PREFIX"
+          echo "Looking for SSH Key Secret:      ${{ env.SECRET_PREFIX }}_SSH_KEY"
+          echo "Looking for Passphrase Secret:   ${{ env.SECRET_PREFIX }}_SSH_PASSPHRASE"
 
       # 2. Connect to Tailscale network
       - name: Connect to Tailscale
