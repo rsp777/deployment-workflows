@@ -58,7 +58,7 @@ jobs:
             [{"id":"github","username":"${{ secrets.USERNAME }}","password":"${{ secrets.PASSWORD }}"}]
           repositories: |
             [
-             {"id":"github","name":"inventory-management-app","url":"https://maven.pkg.github.com/rsp777/inventory-management-app"}]    
+             {"id":"github","name":"${{ github.event.inputs.application }}","url":"https://maven.pkg.github.com/rsp777/${{ github.event.inputs.application }}"}]    
 
       # 3. Handle Mapping & Fetching Remote Versions
       - name: Set Environment Variables & Resolve Version
