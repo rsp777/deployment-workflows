@@ -9,7 +9,7 @@ on:
         type: choice
         options:
           - 'inventory-wms'
-          - 'staging-server-01'
+          - 'auth-wms'
           - 'development-server-01'
       application:
         description: 'Select Spring Boot Application to Deploy'
@@ -17,13 +17,15 @@ on:
         type: choice
         options:
           - 'inventory-management-app'
-          - 'payment-service'
-          - 'inventory-service'
+          - 'inventory-management-system'
+          - 'auth-service'
       version:
         description: 'Target Application Version (Type concrete version or leave as "latest" to fetch most recent)'
         required: true
-        type: string
-        default: 'latest'
+        type: choice
+        options: 
+          - 'Release_v1.0'
+          - '1.0.0'
 
 jobs:
   deploy:
@@ -74,12 +76,32 @@ jobs:
           APP_NAME="${{ github.event.inputs.application }}"
           INPUT_VERSION="${{ github.event.inputs.version }}"
           echo "APP_NAME=${APP_NAME}" >> $GITHUB_ENV
+
+
+          case "$APP_NAME" in
+            "inventory-management-app")
+              GROUP_ID="com.pawar.inventory.app"
+              PACKAGE_NAME="com.pawar.inventory.app.inventory-management-app"
+              ;;
+            "inventory-management-system")
+              GROUP_ID="com.pawar.inventory"
+              ;;
+            "auth-service")
+              GROUP_ID="com.pawar.auth"
+              ;;
+            *)
+              echo "Unknown application: $APP_NAME"
+              exit 1
+              ;;
+          esac
+
+          echo "GROUP_ID=${GROUP_ID}" >> $GITHUB_ENV
           
           if [ "$INPUT_VERSION" = "latest" ]; then
             echo "Fetching the latest package version via GitHub Packages API..."
             PACKAGE_VERSION=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
               -H "Accept: application/vnd.github+json" \
-              "https://maven.pkg.github.com/rsp777//com.pawar.inventory.app.$APP_NAME/versions" \
+              "https://maven.pkg.github.com/rsp777//$GROUP_ID.$APP_NAME/versions" \
               | jq -r '..name // "1.0.0-SNAPSHOT"')
               
             echo "Resolved latest version: $PACKAGE_VERSION"
@@ -96,11 +118,11 @@ jobs:
           # Uses explicit settings routing file flag (-s) just like your working setup
           # mvn dependency:get \
           #   -DrepoUrl=https://maven.pkg.github.com/rsp777/${{ env.APP_NAME }} \
-          #   -Dartifact=com.pawar.inventory.app:${{ env.APP_NAME }}:${{ env.APP_VERSION }}:jar \
+          #   -Dartifact=${{env.GROUP_ID}}:${{ env.APP_NAME }}:${{ env.APP_VERSION }}:jar \
           #   -Dtransitive=false \
           #   -Ddest=./target/${{ env.APP_NAME }}.jar \
           #   -s $HOME/.m2/settings.xml
-          mvn dependency:copy -Dartifact='com.pawar.inventory.app':${{ env.APP_NAME }}:${{ env.APP_VERSION }} -DrepoUrl=https://maven.pkg.github.com/rsp777/inventory-management-app -DrepoId=github \
+          mvn dependency:copy -Dartifact=${{env.GROUP_ID}}:${{ env.APP_NAME }}:${{ env.APP_VERSION }} -DrepoUrl=https://maven.pkg.github.com/rsp777/${{ env.APP_NAME }} -DrepoId=github \
           -Ddest=./target/${{ env.APP_NAME }}.jar -s $HOME/.m2/settings.xml  
         
       # 5. Connect runner container as a temporary secure Tailscale network node
