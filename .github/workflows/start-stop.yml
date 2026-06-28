@@ -9,7 +9,7 @@ on:
         type: choice
         options:
           - 'inventory-wms'
-          - 'staging-server-01'
+          - 'auth-wms'
           - 'development-server-01'
       application:
         description: 'Select Spring Boot Application to Start/Stop'
@@ -17,8 +17,9 @@ on:
         type: choice
         options:
           - 'inventory-management-app'
-          - 'payment-service'
-          - 'inventory-service'
+          - 'inventory-management-system'
+          - 'register-service'
+          - 'login-service'
       command:
         description: 'Start/Stop Command'
         required: true
@@ -38,36 +39,52 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 1. SETTING ENV VARIABLES
-      - name: Set Environment Variables & Resolve Version
+      # 1. SETTING ENV VARIABLES & RESOLVING DYNAMIC PATHS
+      - name: Set Environment Variables & Resolve Variables
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ "${{ github.event.inputs.environment }}" = "inventory-wms" ]; then
-            echo "SERVER_HOST=${{ secrets.PROD_SERVER_IP }}" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.environment }}" = "staging-server-01" ]; then
-            echo "SERVER_HOST=${{ secrets.STAGING_SERVER_IP }}" >> $GITHUB_ENV
+          # Capture Inputs
+          ENVIRONMENT="${{ github.event.inputs.environment }}"
+          APP_NAME="${{ github.event.inputs.application }}"
+          CMD_TYPE="${{ github.event.inputs.command }}"
+          
+          # Resolve Server IP and SSH Key Prefix based on environment
+          if [ "$ENVIRONMENT" = "inventory-wms" ]; then
+            echo "SERVER_HOST=${{ secrets.INVENTORY_WMS_SERVER_ID }}" >> $GITHUB_ENV
+            echo "SECRET_PREFIX=INVENTORY_WMS" >> $GITHUB_ENV
+          elif [ "$ENVIRONMENT" = "auth-wms" ]; then
+            echo "SERVER_HOST=${{ secrets.AUTH_WMS_SERVER_IP }}" >> $GITHUB_ENV
+            echo "SECRET_PREFIX=AUTH_WMS" >> $GITHUB_ENV
           else
             echo "SERVER_HOST=${{ secrets.DEV_SERVER_IP }}" >> $GITHUB_ENV
+            echo "SECRET_PREFIX=DEV" >> $GITHUB_ENV
           fi
 
-          APP_NAME="${{ github.event.inputs.application }}"
+          # Save App Name and Environment
           echo "APP_NAME=${APP_NAME}" >> $GITHUB_ENV
+          echo "ENVIRONMENT=${ENVIRONMENT}" >> $GITHUB_ENV
 
-          if [ "${{ github.event.inputs.command }}" = "start" ]; then
-            echo "COMMAND=${{ secrets.START_CMD }}" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.command }}" = "stop" ]; then
-            echo "COMMAND=${{ secrets.STOP_CMD }}" >> $GITHUB_ENV
-          fi
+          # Construct the Dynamic Command Path
+          # Example output: ./apps/inventory-wms/scripts/start.sh
+          DYNAMIC_CMD="./apps/${ENVIRONMENT}/scripts/${CMD_TYPE}.sh"
+          echo "COMMAND=${DYNAMIC_CMD}" >> $GITHUB_ENV
 
-      # Debug: confirm runtime env vars exist
+      # 2. DEBUG: Confirm runtime env vars exist (Safely prints non-sensitive data)
       - name: Dump resolved env vars
         run: |
           echo "SERVER_HOST=$SERVER_HOST"
           echo "APP_NAME=$APP_NAME"
           echo "COMMAND=$COMMAND"
+          echo "Looking for secrets: ${{ env.SECRET_PREFIX }}_SSH_KEY and ${{ env.SECRET_PREFIX }}_SSH_PASSPHRASE"
 
-      # 2. Connect to Tailscale network (no script input)
+      # 3. DEBUG: Check which secret NAMES are being generated for this run
+      - name: Debug Dynamic Secret Names
+        run: |
+          echo "Looking for SSH Key Secret:      ${{ env.SECRET_PREFIX }}_SSH_KEY"
+          echo "Looking for Passphrase Secret:   ${{ env.SECRET_PREFIX }}_SSH_PASSPHRASE"
+
+      # 4. Connect to Tailscale network
       - name: Connect to Tailscale
         uses: tailscale/github-action@v3
         with:
@@ -84,15 +101,17 @@ jobs:
           done
           tailscale status
       
-      # 3. Run the start/stop command on the target machine using SSH from the runner
+      # 5. Run the start/stop command on the target machine using SSH
       - name: Trigger Start/Stop
         uses: appleboy/ssh-action@master
         with:
           host: ${{ env.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          passphrase: ${{ secrets.SERVER_SSH_PASSPHRASE }}
+          # Dynamically fetches the correct key and passphrase based on the environment
+          key: ${{ secrets[format('{0}_SSH_KEY', env.SECRET_PREFIX)] }}
+          passphrase: ${{ secrets[format('{0}_SSH_PASSPHRASE', env.SECRET_PREFIX)] }}
           port: 22
           script: |
+            # Evaluates to e.g., ./apps/inventory-wms/scripts/start.sh inventory-management-app
             ${{ env.COMMAND }} ${{ env.APP_NAME }}
-            echo "${{ github.event.inputs.command }}ing ${{ env.APP_NAME }} on ${{ env.SERVER_HOST }}"
+            echo "Successfully triggered ${{ github.event.inputs.command }} for ${{ env.APP_NAME }} on ${{ env.SERVER_HOST }}"
