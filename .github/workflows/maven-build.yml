@@ -6,15 +6,15 @@ on:
       USERNAME:
         required: true
         type: string
-      REPO_NAME:
-        required: true
-        type: string
+        
     secrets:
       PASSWORD:
         required: true
       REPO_URL:
         required: true
-
+      REPO_NAME:
+        required: true
+        
 jobs:
   build-test-publish:
     runs-on: ubuntu-latest
