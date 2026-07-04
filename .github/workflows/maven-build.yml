@@ -1,8 +1,19 @@
 name: Build and Deploy Artifact to Maven Registry
 
 on:
-  push:
-    branches: [ "master" ]
+  workflow_call:
+    inputs:
+      USERNAME:
+        required: true
+        type: string
+      REPO_NAME:
+        required: true
+        type: string
+    secrets:
+      PASSWORD:
+        required: true
+      REPO_URL:
+        required: true
 
 jobs:
   build-test-publish:
@@ -11,6 +22,7 @@ jobs:
       contents: write
       packages: write
     env:
+      # GitHub automatically provides this token; it allows the runner to push the tag and commit back to your repo
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       GITHUB_ACTOR: ${{ github.actor }}
       
@@ -31,15 +43,15 @@ jobs:
       - name: Remove existing settings.xml
         run: rm -f $HOME/.m2/settings.xml
 
-      # 4. Configure Maven settings
+      # 4. Configure Maven settings (Using inputs for username/repo name, secrets for the rest)
       - name: Setup Maven settings
         uses: s4u/maven-settings-action@v3.0.0
         with:
           override: true
           servers: |
-            [{"id":"github","username":"${{ secrets.USERNAME }}","password":"${{ secrets.PASSWORD }}"}]
+            [{"id":"github","username":"${{ inputs.USERNAME }}","password":"${{ secrets.PASSWORD }}"}]
           repositories: |
-            [{"id":"github","name":"${{ secrets.REPO_NAME }}","url":"${{ secrets.REPO_URL }}","snapshots":{"enabled":true}}]
+            [{"id":"github","name":"${{ inputs.REPO_NAME }}","url":"${{ secrets.REPO_URL }}","snapshots":{"enabled":true}}]
 
       # 5. Check for existing tag, bump pom.xml if needed, and create tag
       - name: Version bump and push tag
