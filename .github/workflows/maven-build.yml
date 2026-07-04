@@ -97,7 +97,7 @@ jobs:
           java-version: "17"
           distribution: "temurin"
           
-      - name: Create and push tag (use pom version if available)
+      - name: Create and push tag (increment if exists)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_AUTHOR_NAME: ${{ github.actor }}
@@ -107,24 +107,37 @@ jobs:
           git config user.email "$GIT_AUTHOR_EMAIL"
           git config user.name "$GIT_AUTHOR_NAME"
 
-          # Try to read the version from the Maven project. If that fails, fall back to the run number.
-          VERSION=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version 2>/dev/null || true)
+          # 1. Read the current version from the Maven project
+          VERSION=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version 2>/dev/null | tr -d '\r\n')
+
           if [ -z "$VERSION" ]; then
             TAG="v${{ github.run_number }}"
           else
-            # Trim whitespace
-            VERSION=$(echo "$VERSION" | tr -d '\r' | tr -d '\n')
-            TAG="${VERSION}"
+            # 2. Check if the tag already exists in the remote repository
+            if git ls-remote --tags origin | grep -q "refs/tags/${VERSION}$"; then
+              echo "Tag ${VERSION} already exists. Incrementing version..."
+              
+              # 3. Increment the patch version (e.g., 1.0.0 -> 1.0.1)
+              NEW_VERSION=$(echo "$VERSION" | awk -F. -v OFS=. '{$NF += 1 ; print}')
+              
+              echo "Updating pom.xml to $NEW_VERSION"
+              # Update the pom.xml using Maven
+              mvn versions:set -DnewVersion="$NEW_VERSION" -DgenerateBackupPoms=false
+              
+              # 4. Commit and push the updated pom.xml back to the repository
+              git add pom.xml
+              # [skip ci] is critical here to prevent this push from triggering an infinite pipeline loop
+              git commit -m "chore: bump version to $NEW_VERSION [skip ci]"
+              git push origin HEAD:${GITHUB_REF#refs/heads/}
+              
+              TAG="$NEW_VERSION"
+            else
+              echo "Tag ${VERSION} is available."
+              TAG="$VERSION"
+            fi
           fi
 
           echo "Creating tag $TAG for SHA $GITHUB_SHA"
-
-          # Create annotated tag if it doesn't already exist
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists locally; skipping creation."
-          else
-            git tag -a "$TAG" -m "Release $TAG ($GITHUB_SHA)"
-          fi
 
           # Push the tag (GITHUB_TOKEN provided via persist-credentials)
           git push origin "$TAG"
