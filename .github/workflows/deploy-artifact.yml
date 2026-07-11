@@ -118,7 +118,7 @@ jobs:
         run: |
           mkdir -p target
           # Uses explicit settings routing file flag (-s) just like your working setup
-          mvn dependency:get \
+          mvn dependency:copy  \
           -Dartifact=${{env.GROUP_ID}}:${{ env.APP_NAME }}:${{ env.APP_VERSION }}:jar \
           -Dtransitive=false \
           -Ddest=target/${{ env.APP_NAME }}.jar \
