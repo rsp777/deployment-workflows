@@ -124,7 +124,7 @@ jobs:
           -s $HOME/.m2/settings.xml
 
           echo "=== copying to target directory ==="
-          cp ${project.basedir}/target/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar ./target/${{ env.APP_NAME }}.jar
+          cp "${project.basedir}"/target/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar ./target/${{ env.APP_NAME }}.jar
           echo "=== Target directory contents ==="
           
           ls -ltr target/
