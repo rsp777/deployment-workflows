@@ -26,6 +26,7 @@ on:
         options: 
           - 'Release_v1.0'
           - '1.0.0'
+          - '1.0.1'
 
 jobs:
   deploy:
