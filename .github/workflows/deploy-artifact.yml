@@ -121,10 +121,11 @@ jobs:
           mvn dependency:copy  \
           -Dartifact=${{env.GROUP_ID}}:${{ env.APP_NAME }}:${{ env.APP_VERSION }}:jar \
           -Dtransitive=false \
+          -DoutputDirectory=$HOME/.m2/repository \
           -s $HOME/.m2/settings.xml
 
-          echo "=== copying to target directory ==="
-          cp "${project.basedir}"/target/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar ./target/${{ env.APP_NAME }}.jar
+          # Copy from Maven cache to target directory
+          cp $HOME/.m2/repository/$(echo ${{ env.GROUP_ID }} | tr '.' '/')//${{ env.APP_NAME }}/${{ env.APP_VERSION }}/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar ./target/${{ env.APP_NAME }}.jar
           echo "=== Target directory contents ==="
           
           ls -ltr target/
