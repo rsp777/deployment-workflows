@@ -56,7 +56,7 @@ jobs:
         with:
           override: true
           servers: |
-            [{"id":"github","username":"${{ secrets.USERNAME }}","password":"${{ secrets.PASSWORD }}"}]
+            [{"id":"github","username":"${{ secrets.USERNAME }}","password":"${{ secrets.GITHUB_TOKEN }}"}]
           repositories: |
             [
              {"id":"github","name":"${{ github.event.inputs.application }}","url":"https://maven.pkg.github.com/rsp777/${{ github.event.inputs.application }}"}]    
