@@ -117,14 +117,18 @@ jobs:
         run: |
           mkdir -p target
           # Uses explicit settings routing file flag (-s) just like your working setup
-          # mvn dependency:get \
-          #   -DrepoUrl=https://maven.pkg.github.com/rsp777/${{ env.APP_NAME }} \
-          #   -Dartifact=${{env.GROUP_ID}}:${{ env.APP_NAME }}:${{ env.APP_VERSION }}:jar \
-          #   -Dtransitive=false \
-          #   -Ddest=./target/${{ env.APP_NAME }}.jar \
-          #   -s $HOME/.m2/settings.xml
-          mvn dependency:copy -Dartifact=${{env.GROUP_ID}}:${{ env.APP_NAME }}:${{ env.APP_VERSION }} -DrepoUrl=https://maven.pkg.github.com/rsp777/${{ env.APP_NAME }} -DrepoId=github \
-          -Ddest=./target/${{ env.APP_NAME }}.jar -s $HOME/.m2/settings.xml  
+          mvn dependency:get \
+          -Dartifact=${{env.GROUP_ID}}:${{ env.APP_NAME }}:${{ env.APP_VERSION }}:jar \
+          -Dtransitive=false \
+          -Ddest=./target/${{ env.APP_NAME }}.jar \
+          -s $HOME/.m2/settings.xml
+    
+          if [ ! -f ./target/${{ env.APP_NAME }}.jar ]; then
+              echo "Error: Artifact download failed"
+              exit 1
+          fi
+          # mvn dependency:copy -Dartifact=${{env.GROUP_ID}}:${{ env.APP_NAME }}:${{ env.APP_VERSION }} -DrepoUrl=https://maven.pkg.github.com/rsp777/${{ env.APP_NAME }} -DrepoId=github \
+          # -Ddest=./target/${{ env.APP_NAME }}.jar -s $HOME/.m2/settings.xml  
         
       # 5. Connect runner container as a temporary secure Tailscale network node
       - name: Connect to Tailscale Network
