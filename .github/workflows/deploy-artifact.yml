@@ -121,7 +121,7 @@ jobs:
           mvn dependency:get  \
           -Dartifact=${{env.GROUP_ID}}:${{ env.APP_NAME }}:${{ env.APP_VERSION }}:jar \
           -Dtransitive=false \
-          -Ddest=target/${{ env.APP_NAME }}.jar \
+          -DoutputDirectory=target/${{ env.APP_NAME }}.jar \
           -s $HOME/.m2/settings.xml
           echo "=== Target directory contents ==="
           ls -ltr target/
