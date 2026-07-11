@@ -123,7 +123,7 @@ jobs:
           -Dtransitive=false \
           -Ddest=./target/${{ env.APP_NAME }}.jar \
           -s $HOME/.m2/settings.xml
-    
+           mv ./target/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar ./target/${{ env.APP_NAME }}.jar
           if [ ! -f ./target/${{ env.APP_NAME }}.jar ]; then
               echo "Error: Artifact download failed"
               exit 1
