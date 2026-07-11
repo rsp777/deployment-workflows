@@ -66,6 +66,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          echo https://maven.pkg.github.com/rsp777/${{ github.event.inputs.application }}
           if [ "${{ github.event.inputs.environment }}" = "inventory-wms" ]; then
             echo "SERVER_HOST=${{ secrets.PROD_SERVER_IP }}" >> $GITHUB_ENV
           elif [ "${{ github.event.inputs.environment }}" = "staging-server-01" ]; then
