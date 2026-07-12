@@ -1,190 +1,190 @@
-name: Deploy Service to Linux Server
-
-on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Select Target Linux Server / Environment'
-        required: true
-        type: choice
-        options:
-          - 'inventory-wms'
-          - 'auth-wms'
-          - 'development-server-01'
-      application:
-        description: 'Select Spring Boot Application to Deploy'
-        required: true
-        type: choice
-        options:
-          - 'inventory-management-app'
-          - 'inventory-management-system'
-          - 'auth-service'
-      version:
-        description: 'Target Application Version (Type concrete version or leave as "latest" to fetch most recent)'
-        required: true
-        type: choice
-        options: 
-          - 'Release_v1.0'
-          - '1.0.0'
-          - '1.0.1'
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-        # 1. Set up JDK SECOND
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: "17"
-          distribution: "temurin"
-          
-        # 2. Delete the file
-      - name: Remove existing settings.xml
-        run: rm -f $HOME/.m2/settings.xml
-
-        # 3. Setup Maven settings FIRST
-      - name: Setup Maven settings
-        uses: s4u/maven-settings-action@v4.0.0
-        with:
-          override: true
-          servers: |
-            [{"id":"github","username":"${{ secrets.USERNAME }}","password":"${{ secrets.GITHUB_TOKEN }}"}]
-          repositories: |
-            [
-             {"id":"github","name":"${{ github.event.inputs.application }}","url":"https://maven.pkg.github.com/rsp777/${{ github.event.inputs.application }}"}]    
-
-      # 3. Handle Mapping & Fetching Remote Versions
-      - name: Set Environment Variables & Resolve Version
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo https://maven.pkg.github.com/rsp777/${{ github.event.inputs.application }}
-          if [ "${{ github.event.inputs.environment }}" = "inventory-wms" ]; then
-            echo "SERVER_HOST=${{ secrets.INVENTORY_WMS_SERVER_ID }}" >> $GITHUB_ENV
-            echo "SSH_KEY_SECRET=${{ secrets.INVENTORY_WMS_SSH_KEY}}" >> $GITHUB_ENV
-            echo "SSH_PASSPHRASE_SECRET=${{ secrets.INVENTORY_WMS_SSH_PASSPHRASE}}" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.environment }}" = "auth-wms" ]; then
-            echo "SERVER_HOST=${{ secrets.AUTH_WMS_SERVER_IP }}" >> $GITHUB_ENV
-            echo "SSH_KEY_SECRET=${{ secrets.AUTH_WMS_SSH_KEY}}" >> $GITHUB_ENV
-            echo "SSH_PASSPHRASE_SECRET=${{ secrets.AUTH_WMS_SSH_PASSPHRASE}}" >> $GITHUB_ENV
-          else
-            echo "Server Not Configured"
-          fi
-          
-          APP_NAME="${{ github.event.inputs.application }}"
-          INPUT_VERSION="${{ github.event.inputs.version }}"
-          echo "APP_NAME=${APP_NAME}" >> $GITHUB_ENV
-
-
-          case "$APP_NAME" in
-            "inventory-management-app")
-              GROUP_ID="com.pawar.inventory.app"
-              PACKAGE_NAME="com.pawar.inventory.app.inventory-management-app"
-              ;;
-            "inventory-management-system")
-              GROUP_ID="com.pawar.inventory"
-              ;;
-            "auth-service")
-              GROUP_ID="com.pawar.auth"
-              ;;
-            *)
-              echo "Unknown application: $APP_NAME"
-              exit 1
-              ;;
-          esac
-
-          echo "GROUP_ID=${GROUP_ID}" >> $GITHUB_ENV
-          
-          if [ "$INPUT_VERSION" = "latest" ]; then
-            echo "Fetching the latest package version via GitHub Packages API..."
-            PACKAGE_VERSION=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
-              -H "Accept: application/vnd.github+json" \
-              "https://maven.pkg.github.com/rsp777/$GROUP_ID.$APP_NAME/versions" \
-              | jq -r '..name // "1.0.0-SNAPSHOT"')
-              
-            echo "Resolved latest version: $PACKAGE_VERSION"
-            echo "APP_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
-          else
-            echo "Using manual input version: $INPUT_VERSION"
-            echo "APP_VERSION=$INPUT_VERSION" >> $GITHUB_ENV
-          fi
-
-      # 4. Download Target JAR from GitHub Package Registry
-      - name: Download Artifact from Maven Registry
-        run: |
-          mkdir -p target
-          # Uses explicit settings routing file flag (-s) just like your working setup
-          mvn dependency:copy  \
-          -Dartifact=${{env.GROUP_ID}}:${{ env.APP_NAME }}:${{ env.APP_VERSION }}:jar \
-          -Dtransitive=false \
-          -DoutputDirectory=$HOME/.m2/repository \
-          -s $HOME/.m2/settings.xml
-
-          # Copy from Maven cache to target directory
-          cp $HOME/.m2/repository/$(echo ${{ env.GROUP_ID }} | tr '.' '/')//${{ env.APP_NAME }}/${{ env.APP_VERSION }}/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar ./target/${{ env.APP_NAME }}.jar
-          echo "=== Target directory contents ==="
-          
-          ls -ltr target/
-    
-          echo "=== Checking for JAR files ==="
-          find target -name "*.jar" -o -name "*.pom"
-    
-            if [ ! -f target/${{ env.APP_NAME }}.jar ]; then
-              echo "Error: Artifact download failed"
-              exit 1
+  name: Deploy Service to Linux Server
+  
+  on:
+    workflow_dispatch:
+      inputs:
+        environment:
+          description: 'Select Target Linux Server / Environment'
+          required: true
+          type: choice
+          options:
+            - 'inventory-wms'
+            - 'auth-wms'
+            - 'development-server-01'
+        application:
+          description: 'Select Spring Boot Application to Deploy'
+          required: true
+          type: choice
+          options:
+            - 'inventory-management-app'
+            - 'inventory-management-system'
+            - 'auth-service'
+        version:
+          description: 'Target Application Version (Type concrete version or leave as "latest" to fetch most recent)'
+          required: true
+          type: choice
+          options: 
+            - 'Release_v1.0'
+            - '1.0.0'
+            - '1.0.1'
+  
+  jobs:
+    deploy:
+      runs-on: ubuntu-latest
+      permissions:
+        contents: read
+        packages: write
+        
+      steps:
+        - name: Checkout Code
+          uses: actions/checkout@v4
+  
+          # 1. Set up JDK SECOND
+        - name: Set up JDK 17
+          uses: actions/setup-java@v3
+          with:
+            java-version: "17"
+            distribution: "temurin"
+            
+          # 2. Delete the file
+        - name: Remove existing settings.xml
+          run: rm -f $HOME/.m2/settings.xml
+  
+          # 3. Setup Maven settings FIRST
+        - name: Setup Maven settings
+          uses: s4u/maven-settings-action@v4.0.0
+          with:
+            override: true
+            servers: |
+              [{"id":"github","username":"${{ secrets.USERNAME }}","password":"${{ secrets.GITHUB_TOKEN }}"}]
+            repositories: |
+              [
+               {"id":"github","name":"${{ github.event.inputs.application }}","url":"https://maven.pkg.github.com/rsp777/${{ github.event.inputs.application }}"}]    
+  
+        # 3. Handle Mapping & Fetching Remote Versions
+        - name: Set Environment Variables & Resolve Version
+          env:
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          run: |
+            echo https://maven.pkg.github.com/rsp777/${{ github.event.inputs.application }}
+            if [ "${{ github.event.inputs.environment }}" = "inventory-wms" ]; then
+              echo "SERVER_HOST=${{ secrets.INVENTORY_WMS_SERVER_ID }}" >> $GITHUB_ENV
+              echo "SSH_KEY_SECRET=${{ secrets.INVENTORY_WMS_SSH_KEY}}" >> $GITHUB_ENV
+              echo "SSH_PASSPHRASE_SECRET=${{ secrets.INVENTORY_WMS_SSH_PASSPHRASE}}" >> $GITHUB_ENV
+            elif [ "${{ github.event.inputs.environment }}" = "auth-wms" ]; then
+              echo "SERVER_HOST=${{ secrets.AUTH_WMS_SERVER_IP }}" >> $GITHUB_ENV
+              echo "SSH_KEY_SECRET=${{ secrets.AUTH_WMS_SSH_KEY}}" >> $GITHUB_ENV
+              echo "SSH_PASSPHRASE_SECRET=${{ secrets.AUTH_WMS_SSH_PASSPHRASE}}" >> $GITHUB_ENV
+            else
+              echo "Server Not Configured"
             fi
-          # mvn dependency:copy -Dartifact=${{env.GROUP_ID}}:${{ env.APP_NAME }}:${{ env.APP_VERSION }} -DrepoUrl=https://maven.pkg.github.com/rsp777/${{ env.APP_NAME }} -DrepoId=github \
-          # -Ddest=./target/${{ env.APP_NAME }}.jar -s $HOME/.m2/settings.xml  
-        
-      # 5. Connect runner container as a temporary secure Tailscale network node
-      - name: Connect to Tailscale Network
-        uses: tailscale/github-action@v3
-        with:
-          oauth-client-id: ${{ secrets.TAILSCALE_CLIENT_ID }}
-          oauth-secret: ${{ secrets.TAILSCALE_CLIENT_SECRET }}
-          tags: tag:sop
+            
+            APP_NAME="${{ github.event.inputs.application }}"
+            INPUT_VERSION="${{ github.event.inputs.version }}"
+            echo "APP_NAME=${APP_NAME}" >> $GITHUB_ENV
+  
+  
+            case "$APP_NAME" in
+              "inventory-management-app")
+                GROUP_ID="com.pawar.inventory.app"
+                PACKAGE_NAME="com.pawar.inventory.app.inventory-management-app"
+                ;;
+              "inventory-management-system")
+                GROUP_ID="com.pawar.inventory"
+                ;;
+              "auth-service")
+                GROUP_ID="com.pawar.auth"
+                ;;
+              *)
+                echo "Unknown application: $APP_NAME"
+                exit 1
+                ;;
+            esac
+  
+            echo "GROUP_ID=${GROUP_ID}" >> $GITHUB_ENV
+            
+            if [ "$INPUT_VERSION" = "latest" ]; then
+              echo "Fetching the latest package version via GitHub Packages API..."
+              PACKAGE_VERSION=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+                -H "Accept: application/vnd.github+json" \
+                "https://maven.pkg.github.com/rsp777/$GROUP_ID.$APP_NAME/versions" \
+                | jq -r '..name // "1.0.0-SNAPSHOT"')
+                
+              echo "Resolved latest version: $PACKAGE_VERSION"
+              echo "APP_VERSION=$PACKAGE_VERSION" >> $GITHUB_ENV
+            else
+              echo "Using manual input version: $INPUT_VERSION"
+              echo "APP_VERSION=$INPUT_VERSION" >> $GITHUB_ENV
+            fi
+  
+        # 4. Download Target JAR from GitHub Package Registry
+        - name: Download Artifact from Maven Registry
+          run: |
+            mkdir -p target
+            # Uses explicit settings routing file flag (-s) just like your working setup
+            mvn dependency:copy  \
+            -Dartifact=${{env.GROUP_ID}}:${{ env.APP_NAME }}:${{ env.APP_VERSION }}:jar \
+            -Dtransitive=false \
+            -DoutputDirectory=$HOME/.m2/repository \
+            -s $HOME/.m2/settings.xml
+  
+            # Copy from Maven cache to target directory
+            cp $HOME/.m2/repository/$(echo ${{ env.GROUP_ID }} | tr '.' '/')//${{ env.APP_NAME }}/${{ env.APP_VERSION }}/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar ./target/${{ env.APP_NAME }}.jar
+            echo "=== Target directory contents ==="
+            
+            ls -ltr target/
       
-      # 6. Copy JAR to Linux Server via SCP
-      - name: Copy JAR to Linux Server via SCP
-        uses: appleboy/scp-action@master
+            echo "=== Checking for JAR files ==="
+            find target -name "*.jar" -o -name "*.pom"
+      
+              if [ ! -f target/${{ env.APP_NAME }}.jar ]; then
+                echo "Error: Artifact download failed"
+                exit 1
+              fi
+            # mvn dependency:copy -Dartifact=${{env.GROUP_ID}}:${{ env.APP_NAME }}:${{ env.APP_VERSION }} -DrepoUrl=https://maven.pkg.github.com/rsp777/${{ env.APP_NAME }} -DrepoId=github \
+            # -Ddest=./target/${{ env.APP_NAME }}.jar -s $HOME/.m2/settings.xml  
+          
+        # 5. Connect runner container as a temporary secure Tailscale network node
+        - name: Connect to Tailscale Network
+          uses: tailscale/github-action@v3
+          with:
+            oauth-client-id: ${{ secrets.TAILSCALE_CLIENT_ID }}
+            oauth-secret: ${{ secrets.TAILSCALE_CLIENT_SECRET }}
+            tags: tag:sop
         
-        with:
-          host: ${{ env.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ env.SERVER_SSH_KEY }}
-          passphrase: ${{ env.SERVER_SSH_PASSPHRASE }}
-          port: 22
-          source: "${project.basedir}/target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar"
-          target: "/tmp"
-          strip_components: 1
-        
-
-
-      # 7. Deploy the Artifact to Remote Linux Server
-      - name: Deploy the Artifact to Remote Linux Server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ env.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ env.SERVER_SSH_KEY }}
-          passphrase: ${{ env.SERVER_SSH_PASSPHRASE }}
-          port: 22
-          script: |
-            echo "Deploying ${{ env.APP_NAME }}:${{ env.APP_VERSION }} to ${{ env.SERVER_HOST }}"                        
-            mv /tmp/target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar ~/apps/${{ github.event.inputs.environment }}/artifacts/${{ env.APP_NAME }}.jar
-            rm -f /tmp/target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar
-
-            chmod +x ~/apps/${{ github.event.inputs.environment }}/artifacts/${{ env.APP_NAME }}.jar
-            echo "Restarting service: ${{ env.APP_NAME }}"
-            chmod +x ~/apps/${{ github.event.inputs.environment }}/scripts/stop.sh ~/apps/${{ github.event.inputs.environment }}/scripts/start.sh
-            ~/apps/${{ github.event.inputs.environment }}/scripts/stop.sh ${{ env.APP_NAME }}
-            ~/apps/${{ github.event.inputs.environment }}/scripts/start.sh ${{ env.APP_NAME }}
-            echo "Restarted service: ${{ env.APP_NAME }}"
+        # 6. Copy JAR to Linux Server via SCP
+        - name: Copy JAR to Linux Server via SCP
+          uses: appleboy/scp-action@master
+          
+          with:
+            host: ${{ env.SERVER_HOST }}
+            username: ${{ secrets.SERVER_USER }}
+            key: ${{ env.SERVER_SSH_KEY }}
+            passphrase: ${{ env.SERVER_SSH_PASSPHRASE }}
+            port: 22
+            source: "${project.basedir}/target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar"
+            target: "/tmp"
+            strip_components: 1
+          
+  
+  
+        # 7. Deploy the Artifact to Remote Linux Server
+        - name: Deploy the Artifact to Remote Linux Server
+          uses: appleboy/ssh-action@master
+          with:
+            host: ${{ env.SERVER_HOST }}
+            username: ${{ secrets.SERVER_USER }}
+            key: ${{ env.SERVER_SSH_KEY }}
+            passphrase: ${{ env.SERVER_SSH_PASSPHRASE }}
+            port: 22
+            script: |
+              echo "Deploying ${{ env.APP_NAME }}:${{ env.APP_VERSION }} to ${{ env.SERVER_HOST }}"                        
+              mv /tmp/target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar ~/apps/${{ github.event.inputs.environment }}/artifacts/${{ env.APP_NAME }}.jar
+              rm -f /tmp/target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar
+  
+              chmod +x ~/apps/${{ github.event.inputs.environment }}/artifacts/${{ env.APP_NAME }}.jar
+              echo "Restarting service: ${{ env.APP_NAME }}"
+              chmod +x ~/apps/${{ github.event.inputs.environment }}/scripts/stop.sh ~/apps/${{ github.event.inputs.environment }}/scripts/start.sh
+              ~/apps/${{ github.event.inputs.environment }}/scripts/stop.sh ${{ env.APP_NAME }}
+              ~/apps/${{ github.event.inputs.environment }}/scripts/start.sh ${{ env.APP_NAME }}
+              echo "Restarted service: ${{ env.APP_NAME }}"
