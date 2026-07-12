@@ -271,6 +271,15 @@ jobs:
             chmod +x ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar
             echo "Extracting properties: ${{ env.PROPERTIES_NAME }}"
             $JAVA_HOME/jar -vxf ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar ${{ env.APP_NAME }}
+
+            echo "=== Checking deployed properties for JAR files ==="
+            find target -name "*.jar" -o -name "*.pom"
+    
+            if [ ! -f ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar ]; then
+              echo "Error: Properties Artifact ${{ env.PROPERTIES_NAME }} download failed"
+              exit 1
+            fi
+            
             echo "Deployed Properties: ${{ env.PROPERTIES_NAME }}"
 
       # 9. Deploy the Application Artifact to Remote Linux Server
