@@ -68,11 +68,15 @@ jobs:
         run: |
           echo https://maven.pkg.github.com/rsp777/${{ github.event.inputs.application }}
           if [ "${{ github.event.inputs.environment }}" = "inventory-wms" ]; then
-            echo "SERVER_HOST=${{ secrets.PROD_SERVER_IP }}" >> $GITHUB_ENV
-          elif [ "${{ github.event.inputs.environment }}" = "staging-server-01" ]; then
-            echo "SERVER_HOST=${{ secrets.STAGING_SERVER_IP }}" >> $GITHUB_ENV
+            echo "SERVER_HOST=${{ secrets.INVENTORY_WMS_SERVER_ID }}" >> $GITHUB_ENV
+            echo "SSH_KEY_SECRET=${{ secrets.INVENTORY_WMS_SSH_KEY}}" >> $GITHUB_ENV
+            echo "SSH_PASSPHRASE_SECRET=${{ secrets.INVENTORY_WMS_SSH_PASSPHRASE}}" >> $GITHUB_ENV
+          elif [ "${{ github.event.inputs.environment }}" = "auth-wms" ]; then
+            echo "SERVER_HOST=${{ secrets.AUTH_WMS_SERVER_IP }}" >> $GITHUB_ENV
+            echo "SSH_KEY_SECRET=${{ secrets.AUTH_WMS_SSH_KEY}}" >> $GITHUB_ENV
+            echo "SSH_PASSPHRASE_SECRET={{ secrets.AUTH_WMS_SSH_PASSPHRASE}}" >> $GITHUB_ENV
           else
-            echo "SERVER_HOST=${{ secrets.DEV_SERVER_IP }}" >> $GITHUB_ENV
+            echo "Server Not Configured"
           fi
           
           APP_NAME="${{ github.event.inputs.application }}"
@@ -175,7 +179,7 @@ jobs:
           port: 22
           script: |
             echo "Deploying ${{ env.APP_NAME }}:${{ env.APP_VERSION }} to ${{ env.SERVER_HOST }}"                        
-            mv /tmp/target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar ~/apps/inventory-wms/artifacts/${{ env.APP_NAME }}.jar
+            mv /tmp/target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar ~/apps/${{ github.event.inputs.environment }}/artifacts/${{ env.APP_NAME }}.jar
             rm -f /tmp/target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar
 
             chmod +x ~/apps/${{ github.event.inputs.environment }}/artifacts/${{ env.APP_NAME }}.jar
