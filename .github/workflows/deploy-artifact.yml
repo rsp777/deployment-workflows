@@ -195,7 +195,7 @@ jobs:
             fi
 
       # 4. Download Target JAR from GitHub Package Registry
-      - name: Download Artifact from Maven Registry
+      - name: Download Application Artifact from Maven Registry
         run: |
           mkdir -p target
           # Uses explicit settings routing file flag (-s) just like your working setup
@@ -256,7 +256,7 @@ jobs:
           strip_components: 1
 
       # 8. Deploy the Properties Artifact to Remote Linux Server
-      - name: Deploy the Artifact to Remote Linux Server
+      - name: Deploy the Properties Artifact to Remote Linux Server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ env.SERVER_HOST }}
@@ -272,11 +272,16 @@ jobs:
             chmod +x ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar
             echo "Extracting properties: ${{ env.PROPERTIES_NAME }}"
             # jar -xf ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar ${{ env.APP_NAME }}
+            # Install unzip if not already installed
+            if ! command -v unzip &> /dev/null; then
+              echo "Installing unzip..."
+              sudo apt-get update && sudo apt-get install -y unzip
+            fi
             unzip -o ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar -d ~/apps/${{ github.event.inputs.environment }}/properties/
             echo "Deployed Properties: ${{ env.PROPERTIES_NAME }}"
 
       # 9. Deploy the Application Artifact to Remote Linux Server
-      - name: Deploy the Artifact to Remote Linux Server
+      - name: Deploy the Application Artifact to Remote Linux Server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ env.SERVER_HOST }}
