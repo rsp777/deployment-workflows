@@ -70,7 +70,7 @@ jobs:
           if [ "${{ github.event.inputs.environment }}" = "inventory-wms" ]; then
             echo "SERVER_HOST=${{ secrets.INVENTORY_WMS_SERVER_ID }}" >> $GITHUB_ENV
             {
-              echo "SSH_KEY_SECRET<<EOF"
+              echo "SERVER_SSH_KEY<<EOF"
               echo "${{ secrets.INVENTORY_WMS_SSH_KEY }}"
               echo "EOF"
             } >> $GITHUB_ENV
@@ -87,7 +87,7 @@ jobs:
               echo "EOF"
             } >> $GITHUB_ENV
             {
-              echo "SSH_PASSPHRASE_SECRET<<EOF"
+              echo "SERVER_SSH_PASSPHRASE<<EOF"
               echo "${{ secrets.AUTH_WMS_SSH_PASSPHRASE }}"
               echo "EOF"
             } >> $GITHUB_ENV
