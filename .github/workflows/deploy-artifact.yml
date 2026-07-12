@@ -178,7 +178,7 @@ jobs:
           key: ${{ env.SERVER_SSH_KEY }}
           passphrase: ${{ env.SERVER_SSH_PASSPHRASE }}
           port: 22
-          source: "${project.basedir}/target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar"
+          source: "target/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar"
           target: "/tmp"
           strip_components: 1
         
