@@ -27,6 +27,7 @@ on:
           - 'Release_v1.0'
           - '1.0.0'
           - '1.0.1'
+          - '1.0.2'
       properties:
         description: 'Select Spring Boot Application to Deploy'
         required: true
@@ -42,7 +43,7 @@ on:
         options: 
           - 'Release_v1.0'
           - '1.0.0'
-          - '1.0.1'    
+          - '1.0.1'
 
 jobs:
   deploy:
