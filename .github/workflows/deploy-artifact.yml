@@ -278,6 +278,8 @@ jobs:
             echo "Extracting properties: ${{ env.PROPERTIES_NAME }}"
             $JAVA_HOME/jar -vxf ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar ${{ env.APP_NAME }}
             echo "=== Checking extracted properties for JAR files ==="
+            pwd
+            ls -ltr
             find auth-service -name "auth-service" -o -name "*.properties" -o -name "*.xml"
     
             if ! find ~/apps/${{ github.event.inputs.environment }}/properties/auth-service -name "*.properties" -type f | grep -q .; then
