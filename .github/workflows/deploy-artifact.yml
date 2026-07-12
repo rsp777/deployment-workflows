@@ -195,8 +195,8 @@ jobs:
           port: 22
           script: |
             echo "Deploying ${{ env.APP_NAME }}:${{ env.APP_VERSION }} to ${{ env.SERVER_HOST }}"                        
-            mv /tmp/target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar ~/apps/${{ github.event.inputs.environment }}/artifacts/${{ env.APP_NAME }}.jar
-            rm -f /tmp/target/dependency/${{ env.APP_NAME }}-${{ env.APP_VERSION }}.jar
+            mv /tmp/${{ env.APP_NAME }}.jar ~/apps/${{ github.event.inputs.environment }}/artifacts/${{ env.APP_NAME }}.jar
+            rm -f /tmp/${{ env.APP_NAME }}.jar
 
             chmod +x ~/apps/${{ github.event.inputs.environment }}/artifacts/${{ env.APP_NAME }}.jar
             echo "Restarting service: ${{ env.APP_NAME }}"
