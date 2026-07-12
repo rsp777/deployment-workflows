@@ -276,7 +276,7 @@ jobs:
             fi
             chmod +x ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar
             echo "Extracting properties: ${{ env.PROPERTIES_NAME }}"
-            $JAVA_HOME/jar -vxf ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar ${{ env.APP_NAME }}
+            $JAVA_HOME/jar -vxf ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar -C ~/apps/${{ github.event.inputs.environment }}/properties/ ${{ env.APP_NAME }}
             echo "=== Checking extracted properties for JAR files ==="
             pwd
             ls -ltr
