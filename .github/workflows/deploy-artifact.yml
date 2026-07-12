@@ -82,12 +82,12 @@ jobs:
           elif [ "${{ github.event.inputs.environment }}" = "auth-wms" ]; then
             echo "SERVER_HOST=${{ secrets.AUTH_WMS_SERVER_IP }}" >> $GITHUB_ENV
             {
-              echo "SSH_KEY_SECRET<<EOF"
+              echo "SERVER_SSH_KEY<<EOF"
               echo "${{ secrets.AUTH_WMS_SSH_KEY }}"
               echo "EOF"
             } >> $GITHUB_ENV
             {
-              echo "SERVER_SSH_PASSPHRASE<<EOF"
+              echo "SSH_PASSPHRASE_SECRET<<EOF"
               echo "${{ secrets.AUTH_WMS_SSH_PASSPHRASE }}"
               echo "EOF"
             } >> $GITHUB_ENV
