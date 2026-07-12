@@ -267,11 +267,6 @@ jobs:
             echo "Deploying ${{ env.PROPERTIES_NAME }}:${{ env.PROPERTIES_VERSION }} to ${{ env.SERVER_HOST }}"                        
             mv /tmp/${{ env.PROPERTIES_NAME }}.jar ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar
             rm -f /tmp/${{ env.PROPERTIES_NAME }}.jar
-
-            chmod +x ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar
-            echo "Extracting properties: ${{ env.PROPERTIES_NAME }}"
-            $JAVA_HOME/jar -vxf ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar ${{ env.APP_NAME }}
-
             echo "=== Checking deployed properties for JAR files ==="
             find target -name "*.jar" -o -name "*.pom"
     
@@ -279,6 +274,17 @@ jobs:
               echo "Error: Properties Artifact ${{ env.PROPERTIES_NAME }} download failed"
               exit 1
             fi
+            chmod +x ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar
+            echo "Extracting properties: ${{ env.PROPERTIES_NAME }}"
+            $JAVA_HOME/jar -vxf ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar ${{ env.APP_NAME }}
+            echo "=== Checking extracted properties for JAR files ==="
+            find auth-service -name "auth-service" -o -name "*.properties" -o -name "*.xml"
+    
+            if [ ! -f ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.APP_NAME }}/*.properties ]; then
+              echo "Error: Properties Artifact ${{ env.PROPERTIES_NAME }} extraction failed"
+              exit 1
+            fi
+           
             
             echo "Deployed Properties: ${{ env.PROPERTIES_NAME }}"
 
