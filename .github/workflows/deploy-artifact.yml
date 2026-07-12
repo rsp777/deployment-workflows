@@ -168,7 +168,7 @@ jobs:
               exit 1
               ;;
           esac
-
+          echo "PROP_GROUP_ID=${PROP_GROUP_ID}" >> $GITHUB_ENV
       # 3. Download Properties JAR from GitHub Package Registry
       - name: Download Properties JAR from Maven Registry
         run: |
