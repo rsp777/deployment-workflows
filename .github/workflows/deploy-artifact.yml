@@ -75,7 +75,7 @@ jobs:
               echo "EOF"
             } >> $GITHUB_ENV
             {
-              echo "SSH_PASSPHRASE_SECRET<<EOF"
+              echo "SERVER_SSH_PASSPHRASE<<EOF"
               echo "${{ secrets.INVENTORY_WMS_SSH_PASSPHRASE }}"
               echo "EOF"
             } >> $GITHUB_ENV
@@ -87,7 +87,7 @@ jobs:
               echo "EOF"
             } >> $GITHUB_ENV
             {
-              echo "SSH_PASSPHRASE_SECRET<<EOF"
+              echo "SERVER_SSH_PASSPHRASE<<EOF"
               echo "${{ secrets.AUTH_WMS_SSH_PASSPHRASE }}"
               echo "EOF"
             } >> $GITHUB_ENV
