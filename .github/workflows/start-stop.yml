@@ -10,7 +10,6 @@ on:
         options:
           - 'inventory-wms'
           - 'auth-wms'
-          - 'development-server-01'
       application:
         description: 'Select Spring Boot Application to Start/Stop'
         required: true
@@ -18,8 +17,7 @@ on:
         options:
           - 'inventory-management-app'
           - 'inventory-management-system'
-          - 'register-service'
-          - 'login-service'
+          - 'auth-service'
       command:
         description: 'Start/Stop Command'
         required: true
