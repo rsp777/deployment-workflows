@@ -27,6 +27,22 @@ on:
           - 'Release_v1.0'
           - '1.0.0'
           - '1.0.1'
+      properties:
+        description: 'Select Spring Boot Application to Deploy'
+        required: true
+        type: choice
+        options:
+          - 'authentication-properties'
+          - 'inventory-management-properties'
+          
+      propertiesVersion:
+        description: 'Target Application Properties Version (Type concrete version or leave as "latest" to fetch most recent)'
+        required: true
+        type: choice
+        options: 
+          - 'Release_v1.0'
+          - '1.0.0'
+          - '1.0.1'    
 
 jobs:
   deploy:
@@ -59,7 +75,8 @@ jobs:
             [{"id":"github","username":"${{ secrets.USERNAME }}","password":"${{ secrets.GITHUB_TOKEN }}"}]
           repositories: |
             [
-             {"id":"github","name":"${{ github.event.inputs.application }}","url":"https://maven.pkg.github.com/rsp777/${{ github.event.inputs.application }}"}]    
+             {"id":"github","name":"${{ github.event.inputs.application }}","url":"https://maven.pkg.github.com/rsp777/${{ github.event.inputs.application }}"},
+             {"id":"github","name":"${{ github.event.inputs.properties }}","url":"https://maven.pkg.github.com/rsp777/${{ github.event.inputs.properties }}"}]    
 
       # 3. Handle Mapping & Fetching Remote Versions
       - name: Set Environment Variables & Resolve Version
@@ -133,6 +150,50 @@ jobs:
             echo "APP_VERSION=$INPUT_VERSION" >> $GITHUB_ENV
           fi
 
+          # Set Properties and Properties Version
+          PROPERTIES_NAME="${{ github.event.inputs.properties }}"
+          PROPERTIES_VERSION="${{ github.event.inputs.propertiesVersion }}"
+          echo "PROPERTIES_NAME=${PROPERTIES_NAME}" >> $GITHUB_ENV
+          echo "PROPERTIES_VERSION=${PROPERTIES_VERSION}" >> $GITHUB_ENV
+
+          case "$PROPERTIES_NAME" in
+            "authentication-properties")
+              PROP_GROUP_ID="com.pawar.auth"
+              ;;
+            "inventory-management-properties")
+              PROP_GROUP_ID="com.pawar.inventory"
+              ;;
+            *)
+              echo "Unknown application: $APP_NAME"
+              exit 1
+              ;;
+          esac
+
+      # 3. Download Properties JAR from GitHub Package Registry
+      - name: Download Properties JAR from Maven Registry
+        run: |
+          mkdir -p target
+          # Uses explicit settings routing file flag (-s) just like your working setup
+          mvn dependency:copy  \
+          -Dartifact=${{env.PROP_GROUP_ID}}:${{ env.PROPERTIES_NAME }}:${{ env.PROPERTIES_VERSION }}:jar \
+          -Dtransitive=false \
+          -DoutputDirectory=$HOME/.m2/repository \
+          -s $HOME/.m2/settings.xml
+
+          # Copy from Maven cache to target directory
+          cp $HOME/.m2/repository/$(echo ${{ env.PROP_GROUP_ID }} | tr '.' '/')//${{ env.PROPERTIES_NAME }}/${{ env.PROPERTIES_VERSION }}/${{ env.PROPERTIES_NAME }}-${{ env.PROPERTIES_VERSION }}.jar ./target/${{ env.PROPERTIES_NAME }}.jar
+          echo "=== Target directory contents ==="
+          
+          ls -ltr target/
+    
+          echo "=== Checking for JAR files ==="
+          find target -name "*.jar" -o -name "*.pom"
+    
+            if [ ! -f target/${{ env.PROPERTIES_NAME }}.jar ]; then
+              echo "Error: Artifact download failed"
+              exit 1
+            fi
+
       # 4. Download Target JAR from GitHub Package Registry
       - name: Download Artifact from Maven Registry
         run: |
@@ -157,8 +218,6 @@ jobs:
               echo "Error: Artifact download failed"
               exit 1
             fi
-          # mvn dependency:copy -Dartifact=${{env.GROUP_ID}}:${{ env.APP_NAME }}:${{ env.APP_VERSION }} -DrepoUrl=https://maven.pkg.github.com/rsp777/${{ env.APP_NAME }} -DrepoId=github \
-          # -Ddest=./target/${{ env.APP_NAME }}.jar -s $HOME/.m2/settings.xml  
         
       # 5. Connect runner container as a temporary secure Tailscale network node
       - name: Connect to Tailscale Network
@@ -168,8 +227,22 @@ jobs:
           oauth-secret: ${{ secrets.TAILSCALE_CLIENT_SECRET }}
           tags: tag:sop
       
-      # 6. Copy JAR to Linux Server via SCP
-      - name: Copy JAR to Linux Server via SCP
+      # 6. Copy Properties JAR to Linux Server via SCP
+      - name: Copy Properties JAR to Linux Server via SCP
+        uses: appleboy/scp-action@master
+        
+        with:
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ env.SERVER_SSH_KEY }}
+          passphrase: ${{ env.SERVER_SSH_PASSPHRASE }}
+          port: 22
+          source: "target/${{ env.PROPERTIES_NAME }}.jar"
+          target: "/tmp"
+          strip_components: 1
+
+      # 7. Copy Application JAR to Linux Server via SCP
+      - name: Copy Application JAR to Linux Server via SCP
         uses: appleboy/scp-action@master
         
         with:
@@ -181,10 +254,27 @@ jobs:
           source: "target/${{ env.APP_NAME }}.jar"
           target: "/tmp"
           strip_components: 1
-        
 
+      # 8. Deploy the Properties Artifact to Remote Linux Server
+      - name: Deploy the Artifact to Remote Linux Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ env.SERVER_SSH_KEY }}
+          passphrase: ${{ env.SERVER_SSH_PASSPHRASE }}
+          port: 22
+          script: |
+            echo "Deploying ${{ env.PROPERTIES_NAME }}:${{ env.PROPERTIES_VERSION }} to ${{ env.SERVER_HOST }}"                        
+            mv /tmp/${{ env.PROPERTIES_NAME }}.jar ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar
+            rm -f /tmp/${{ env.PROPERTIES_NAME }}.jar
 
-      # 7. Deploy the Artifact to Remote Linux Server
+            chmod +x ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar
+            echo "Extracting properties: ${{ env.PROPERTIES_NAME }}"
+            jar -xf ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar ${{ env.APP_NAME }}
+            echo "Deployed Properties: ${{ env.PROPERTIES_NAME }}"
+
+      # 9. Deploy the Application Artifact to Remote Linux Server
       - name: Deploy the Artifact to Remote Linux Server
         uses: appleboy/ssh-action@master
         with:
