@@ -280,9 +280,9 @@ jobs:
             echo "=== Checking extracted properties for JAR files ==="
             find auth-service -name "auth-service" -o -name "*.properties" -o -name "*.xml"
     
-            if [ ! -f ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.APP_NAME }}/*.properties ]; then
-              echo "Error: Properties Artifact ${{ env.PROPERTIES_NAME }} extraction failed"
-              exit 1
+            if ! find ~/apps/${{ github.event.inputs.environment }}/properties/auth-service -name "*.properties" -type f | grep -q .; then
+                echo "Error: No properties files found"
+                exit 1
             fi
            
             
