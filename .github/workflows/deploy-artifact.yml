@@ -271,7 +271,8 @@ jobs:
 
             chmod +x ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar
             echo "Extracting properties: ${{ env.PROPERTIES_NAME }}"
-            jar -xf ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar ${{ env.APP_NAME }}
+            # jar -xf ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar ${{ env.APP_NAME }}
+            unzip -o ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar -d ~/apps/${{ github.event.inputs.environment }}/properties/
             echo "Deployed Properties: ${{ env.PROPERTIES_NAME }}"
 
       # 9. Deploy the Application Artifact to Remote Linux Server
