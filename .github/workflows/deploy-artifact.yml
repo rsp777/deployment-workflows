@@ -268,7 +268,6 @@ jobs:
             mv /tmp/${{ env.PROPERTIES_NAME }}.jar ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar
             rm -f /tmp/${{ env.PROPERTIES_NAME }}.jar
             echo "=== Checking deployed properties for JAR files ==="
-            find target -name "*.jar" -o -name "*.pom"
     
             if [ ! -f ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar ]; then
               echo "Error: Properties Artifact ${{ env.PROPERTIES_NAME }} download failed"
@@ -276,13 +275,14 @@ jobs:
             fi
             chmod +x ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar
             echo "Extracting properties: ${{ env.PROPERTIES_NAME }}"
-            $JAVA_HOME/jar -vxf ~/apps/${{ github.event.inputs.environment }}/properties/${{ env.PROPERTIES_NAME }}.jar -C ~/apps/${{ github.event.inputs.environment }}/properties/ ${{ env.APP_NAME }}
+            cd  ~/apps/${{ github.event.inputs.environment }}/properties/
+            $JAVA_HOME/jar -xf ${{ env.PROPERTIES_NAME }}.jar ${{ env.APP_NAME }}
             echo "=== Checking extracted properties for JAR files ==="
             pwd
             ls -ltr
             find auth-service -name "auth-service" -o -name "*.properties" -o -name "*.xml"
     
-            if ! find ~/apps/${{ github.event.inputs.environment }}/properties/auth-service -name "*.properties" -type f | grep -q .; then
+            if ! find ${{ env.APP_NAME }} -name "*.properties" -type f | grep -q .; then
                 echo "Error: No properties files found"
                 exit 1
             fi
