@@ -25,6 +25,10 @@ on:
         type: choice
         options: 
           - 'Release_v1.0'
+          - '0.0.0'
+          - '0.0.1'
+          - '0.0.2'
+          - '0.0.3'
           - '1.0.0'
           - '1.0.1'
           - '1.0.2'
@@ -42,6 +46,10 @@ on:
         type: choice
         options: 
           - 'Release_v1.0'
+          - '0.0.0'
+          - '0.0.1'
+          - '0.0.2'
+          - '0.0.3'
           - '1.0.0'
           - '1.0.1'
 
@@ -279,9 +287,6 @@ jobs:
             cd  ~/apps/${{ github.event.inputs.environment }}/properties/
             $JAVA_HOME/jar -xf ${{ env.PROPERTIES_NAME }}.jar ${{ env.APP_NAME }}
             echo "=== Checking extracted properties for JAR files ==="
-            pwd
-            ls -ltr
-            find auth-service -name "auth-service" -o -name "*.properties" -o -name "*.xml"
     
             if ! find ${{ env.APP_NAME }} -name "*.properties" -type f | grep -q .; then
                 echo "Error: No properties files found"
