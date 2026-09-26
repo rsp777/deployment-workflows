@@ -67,7 +67,8 @@ jobs:
       # 5. Download the JAR that was published by the maven-build job
       - name: Download JAR from Artifactory
         run: |
-          rm -rf *
+         find . -maxdepth 1 ! -name 'Dockerfile' ! -name '.' -exec rm -rf {} +
+ 
           mkdir -p target
           mvn dependency:get -s $HOME/.m2/settings.xml \
             -DrepoUrl="${{ secrets.REPO_URL }}" \
