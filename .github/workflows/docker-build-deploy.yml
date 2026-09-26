@@ -67,12 +67,13 @@ jobs:
       # 5. Download the JAR that was published by the maven-build job
       - name: Download JAR from Artifactory
         run: |
+          rm -rf *
           mkdir -p target
           mvn dependency:get -s $HOME/.m2/settings.xml \
             -DrepoUrl="${{ secrets.REPO_URL }}" \
             -Dartifact="${{ env.GROUP_ID }}:${{ env.APP_NAME }}:${{ env.APP_VERSION }}:jar" \
             -Ddest=target/"${{ env.APP_NAME }}".jar
-          ls -ltr   
+            
 
       # 6. Authenticate to GitHub Container Registry (GHCR)
       - name: Log in to GitHub Container Registry
