@@ -57,7 +57,7 @@ jobs:
         run: |
           VERSION=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version 2>/dev/null | tr -d '\r\n')
           GROUP_ID=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.groupId 2>/dev/null | tr -d '\r\n')
-          APP_NAME=$(${{ inputs.REPO_NAME }})
+          APP_NAME=${{ inputs.REPO_NAME }}
          
           echo "Resolved -> groupId: $GROUP_ID | artifactId: $APP_NAME | version: $VERSION"
           echo "APP_VERSION=$VERSION"   >> $GITHUB_ENV
