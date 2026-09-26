@@ -8,7 +8,7 @@ on:
         type: string
 
     secrets:
-      GITHUB_TOKEN:
+      PASSWORD:
         required: true
       REPO_URL:
         required: true
@@ -41,14 +41,14 @@ jobs:
         with:
           override: true
           servers: |
-            [{"id":"github","username":"${{ inputs.USERNAME }}","password":"${{ secrets.GITHUB_TOKEN }}"}]
+            [{"id":"github","username":"${{ inputs.USERNAME }}","password":"${{ secrets.PASSWORD }}"}]
           repositories: |
             [{"id":"github","name":"${{ secrets.REPO_NAME }}","url":"${{ secrets.REPO_URL }}","snapshots":{"enabled":true}}]
 
       # 4. Extract Maven project coordinates (groupId, artifactId, version) from pom.xml
       - name: Resolve Maven coordinates
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PASSWORD }}
         run: |
           VERSION=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version 2>/dev/null | tr -d '\r\n')
           GROUP_ID=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.groupId 2>/dev/null | tr -d '\r\n')
@@ -74,7 +74,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ inputs.USERNAME }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.PASSWORD }}
 
       # 7. Setup Docker Buildx for multi-platform support
       - name: Set up Docker Buildx
