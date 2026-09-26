@@ -6,14 +6,17 @@ on:
       USERNAME:
         required: true
         type: string
+      REPO_URL:
+        required: true
+        type: string
+      REPO_NAME:
+        required: true
+        type: string
 
     secrets:
       PASSWORD:
         required: true
-      REPO_URL:
-        required: true
-      REPO_NAME:
-        required: true
+      
 
 jobs:
   docker-build-publish:
@@ -45,7 +48,7 @@ jobs:
           servers: |
             [{"id":"github","username":"${{ inputs.USERNAME }}","password":"${{ secrets.PASSWORD }}"}]
           repositories: |
-            [{"id":"github","name":"${{ secrets.REPO_NAME }}","url":"${{ secrets.REPO_URL }}","snapshots":{"enabled":true}}]
+            [{"id":"github","name":"${{ inputs.REPO_NAME }}","url":"${{ inputs.REPO_URL }}","snapshots":{"enabled":true}}]
 
       # 4. Extract Maven project coordinates (groupId, artifactId, version) from pom.xml
       - name: Resolve Maven coordinates
@@ -54,8 +57,8 @@ jobs:
         run: |
           VERSION=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.version 2>/dev/null | tr -d '\r\n')
           GROUP_ID=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.groupId 2>/dev/null | tr -d '\r\n')
-          APP_NAME=$(mvn -q -DforceStdout help:evaluate -Dexpression=project.artifactId 2>/dev/null | tr -d '\r\n')
-          echo "APP_NAME=$APP_NAME" | sed 's/./& /g'
+          APP_NAME=$(${{ inputs.REPO_NAME }})
+         
           echo "Resolved -> groupId: $GROUP_ID | artifactId: $APP_NAME | version: $VERSION"
           echo "APP_VERSION=$VERSION"   >> $GITHUB_ENV
           echo "GROUP_ID=$GROUP_ID"     >> $GITHUB_ENV
