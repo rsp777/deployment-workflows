@@ -72,7 +72,7 @@ jobs:
             -DrepoUrl="${{ secrets.REPO_URL }}" \
             -Dartifact="${{ env.GROUP_ID }}:${{ env.APP_NAME }}:${{ env.APP_VERSION }}:jar" \
             -Ddest=target/"${{ env.APP_NAME }}".jar
-         ls -ltr   
+          ls -ltr   
 
       # 6. Authenticate to GitHub Container Registry (GHCR)
       - name: Log in to GitHub Container Registry
