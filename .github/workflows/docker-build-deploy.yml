@@ -69,14 +69,13 @@ jobs:
         run: |
          find . -maxdepth 1 ! -name 'Dockerfile' ! -name '.' -exec rm -rf {} +
          mkdir -p target
-          mvn dependency:get -s $HOME/.m2/settings.xml \
+         mvn dependency:get -s $HOME/.m2/settings.xml \
             -DrepoUrl="${{ secrets.REPO_URL }}" \
             -Dartifact="${{ env.GROUP_ID }}:${{ env.APP_NAME }}:${{ env.APP_VERSION }}:jar" \
             -Ddest=target/"${{ env.APP_NAME }}".jar \
             -Dtransitive=false
-          find . -maxdepth 20 -name "${{ env.APP_NAME }}.jar"
-          ls -ltr
-          ls -ltr target/
+         cp ~/.m2/repository/com/pawar/amt/"${{ env.APP_NAME }}"/"${{ env.APP_VERSION }}"/"${{ env.APP_NAME }}"-"${{ env.APP_VERSION }}".jar target/
+         ls -ltr target/
             
 
       # 6. Authenticate to GitHub Container Registry (GHCR)
