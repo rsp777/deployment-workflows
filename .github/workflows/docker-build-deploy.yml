@@ -69,7 +69,6 @@ jobs:
         run: |
          find . -maxdepth 1 ! -name 'Dockerfile' ! -name '.' -exec rm -rf {} +
  
-          mkdir -p target
           mvn dependency:get -s $HOME/.m2/settings.xml \
             -DrepoUrl="${{ secrets.REPO_URL }}" \
             -Dartifact="${{ env.GROUP_ID }}:${{ env.APP_NAME }}:${{ env.APP_VERSION }}:jar" \
