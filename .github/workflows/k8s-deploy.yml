@@ -94,6 +94,12 @@ jobs:
             echo "namespace=service-pulse-${{ inputs.environment }}" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Connect to Tailscale Network
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TAILSCALE_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TAILSCALE_CLIENT_SECRET }}
+          tags: tag:sop
       # ── 2. Checkout k8s manifests from the dedicated manifests repo ──────────
       #   Public repo — no token required. GITHUB_TOKEN is used implicitly.
       - name: Checkout k8s manifests repo
@@ -116,7 +122,7 @@ jobs:
           source: "k8s-manifests/"
           target: "$HOME/.deploy/service-pulse-app/"
           overwrite: true
-
+      
       # ── 3. SSH into the VM and deploy ───────────────────────────────────────
       #   We use appleboy/ssh-action which handles all SSH plumbing.
       #   The script block runs entirely on the remote VM.
